@@ -6,16 +6,16 @@
 
 // Screen dimensions
 #define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 32
+#define SCREEN_HEIGHT 64
 
 // I2C pins for ESP32-S3
-#define I2C_SDA 4
-#define I2C_SCL 5
+#define I2C_SDA 13
+#define I2C_SCL 14
 
 // Push button
-#define buttonPin 13
-int buttonState = 0;
-int lastButtonState = 0;
+// #define buttonPin 13
+// int buttonState = 0;
+// int lastButtonState = 0;
 
 // Display object declaration
 #define OLED_RESET -1 // No reset pin
@@ -31,7 +31,7 @@ void writeText(String text) {
   int16_t x = (SCREEN_WIDTH - w) / 2;
   int16_t y = (SCREEN_HEIGHT - h) / 2;
 
-  display.setCursor(x, SCREEN_HEIGHT - 6);
+  display.setCursor(x, y);
   display.print(text);
   display.display(); // pushes to screen
 }
@@ -57,18 +57,18 @@ void setup() {
   display.setTextColor(SSD1306_WHITE);
 
 
-  String text = "Spotify";
+  String text = "Universal";
   writeText(text);
 
-  pinMode(buttonPin, INPUT_PULLDOWN);
+  // pinMode(buttonPin, INPUT_PULLDOWN);
 }
 
 void loop() {
-  buttonState = digitalRead(buttonPin);
-  if (buttonState == HIGH && buttonState != lastButtonState) {
+  // buttonState = digitalRead(buttonPin);
+  // if (buttonState == HIGH && buttonState != lastButtonState) {
     
-  }
+  // }
 
-  lastButtonState = buttonState;
+  // lastButtonState = buttonState;
   // test
 }

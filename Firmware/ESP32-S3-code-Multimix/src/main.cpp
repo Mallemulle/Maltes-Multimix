@@ -2,7 +2,17 @@
 #include <Adafruit_SSD1306.h>
 #include <U8g2_for_Adafruit_GFX.h>
 #include <Fonts/FreeSerifBold12pt7b.h>
+#include <USB.h>
+#include <USBHIDKeyboard.h>
+#include <USBHIDConsumerControl.h>
 #include <Wire.h>
+
+
+
+// Creates objects so computer sees device as keyboard and media controller
+USBHIDKeyboard Keyboard;
+USBHIDConsumerControl Consumer;
+
 
 // Screen dimensions
 #define SCREEN_WIDTH 128
@@ -11,6 +21,13 @@
 // I2C pins for ESP32-S3
 #define I2C_SDA 13
 #define I2C_SCL 14
+
+
+// KY-040 rotary encoder
+#define KY040_SW 5
+#define KY040_DT 6
+#define KY040_CLK 47
+
 
 // Push button
 // #define buttonPin 13
@@ -39,8 +56,13 @@ void writeText(String text) {
 
 void setup() {
   Serial.begin(115200); // initialize Serial Monitor
+  
+  // Start built in USB services
+  Keyboard.begin();
+  Consumer.begin();
+  USB.begin();
+  
   Wire.begin(I2C_SDA, I2C_SCL);
-
   delay(1000);
 
   // Initialize display
@@ -71,4 +93,10 @@ void loop() {
 
   // lastButtonState = buttonState;
   // test
+
+  // Increments sound every second
+  Consumer.press(CONSUMER_CONTROL_VOLUME_INCREMENT);
+  delay(5);
+  Consumer.release();
+  delay(1000);
 }

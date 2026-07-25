@@ -81,22 +81,12 @@ void setup() {
 
   String text = "Universal";
   writeText(text);
-
-  // pinMode(buttonPin, INPUT_PULLDOWN);
 }
 
 void loop() {
-  // buttonState = digitalRead(buttonPin);
-  // if (buttonState == HIGH && buttonState != lastButtonState) {
-    
-  // }
-
-  // lastButtonState = buttonState;
-  // test
-
-  // Increments sound every second
-  Consumer.press(CONSUMER_CONTROL_VOLUME_INCREMENT);
+  // Skips to next song every 5 seconds
+  Consumer.press(CONSUMER_CONTROL_SCAN_NEXT);
   delay(5);
   Consumer.release();
-  delay(1000);
+  delay(5000);
 }

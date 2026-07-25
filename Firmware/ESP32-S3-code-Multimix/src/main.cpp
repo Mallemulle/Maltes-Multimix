@@ -26,15 +26,33 @@ USBHIDConsumerControl Consumer;
 #define PREV_TRACK 45
 #define PLAY_PAUSE 38
 #define NEXT_TRACK 2
+
+// Mute buttons
+#define MUTE_OUT 9
+#define MUTE_IN 46
+
+// Side buttons
+#define SIDE_UP 3
+#define SIDE_DOWN 15
+
+// Last states
 int lastPrevState = 0;
 int lastPlayState = 0;
 int lastNextState = 0;
+int lastMuteOutState = 0;
+int lastMuteInState = 0;
+int lastSideUpState = 0;
+int lastSideDownState = 0;
 
 // Button debouncing
 #define BUTTON_DEBOUNCE 50 // 50 ms
 unsigned long debouncePrev = 0;
 unsigned long debouncePlay = 0;
 unsigned long debounceNext = 0;
+unsigned long debounceMuteOut = 0;
+unsigned long debounceMuteIn = 0;
+unsigned long debounceSideUp = 0;
+unsigned long debounceSideDown = 0;
 
 // KY-040 rotary encoder
 #define KY040_SW 5
@@ -92,6 +110,10 @@ void setup() {
   pinMode(PREV_TRACK, INPUT_PULLDOWN);
   pinMode(PLAY_PAUSE, INPUT_PULLDOWN);
   pinMode(NEXT_TRACK, INPUT_PULLDOWN);
+  pinMode(MUTE_OUT, INPUT_PULLDOWN);
+  pinMode(MUTE_IN, INPUT_PULLDOWN);
+  pinMode(SIDE_UP, INPUT_PULLDOWN);
+  pinMode(SIDE_DOWN, INPUT_PULLDOWN);
   
   Wire.begin(I2C_SDA, I2C_SCL);
   delay(1000);
@@ -121,14 +143,46 @@ void loop() {
     Consumer.press(CONSUMER_CONTROL_SCAN_PREVIOUS);
     Consumer.release();
   }
+
   // Play/Pause
   if (isButtonPressed(PLAY_PAUSE, lastPlayState, debouncePlay)) {
     Consumer.press(CONSUMER_CONTROL_PLAY_PAUSE);
     Consumer.release();
   }
+
   // Next Track
   if (isButtonPressed(NEXT_TRACK, lastNextState, debounceNext)) {
     Consumer.press(CONSUMER_CONTROL_SCAN_NEXT);
+    Consumer.release();
+  }
+
+  // Mute Out
+  if (isButtonPressed(MUTE_OUT, lastMuteOutState, debounceMuteOut)) {
+    Consumer.press(CONSUMER_CONTROL_MUTE);
+    Consumer.release();
+  }
+
+  // Mute In
+  if (isButtonPressed(MUTE_IN, lastMuteInState, debounceMuteIn)) {
+    // Might have to change to f13 or similar and program apps to use it as a mic mute shortcut
+    // This shorcut in place right now doesn't work
+    Keyboard.press(KEY_LEFT_GUI);
+    Keyboard.press(KEY_LEFT_ALT);
+    Keyboard.press('k');
+    Keyboard.releaseAll();
+  }
+
+  // Side Up
+  if (isButtonPressed(SIDE_UP, lastSideUpState, debounceSideUp)) {
+    Keyboard.press(KEY_LEFT_GUI);
+    Keyboard.press(KEY_LEFT_CTRL);
+    Keyboard.press('v');
+    Keyboard.releaseAll();
+  }
+
+  // Side Down
+  if (isButtonPressed(SIDE_DOWN, lastSideDownState, debounceSideDown)) {
+    Consumer.press(CONSUMER_CONTROL_BRIGHTNESS_INCREMENT);
     Consumer.release();
   }
 }

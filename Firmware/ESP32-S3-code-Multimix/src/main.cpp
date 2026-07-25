@@ -22,23 +22,32 @@ USBHIDConsumerControl Consumer;
 #define I2C_SDA 13
 #define I2C_SCL 14
 
+// Media push buttons
+#define PREV_TRACK 45
+#define PLAY_PAUSE 38
+#define NEXT_TRACK 2
+int lastPrevState = 0;
+int lastPlayState = 0;
+int lastNextState = 0;
+
+// Button debouncing
+#define BUTTON_DEBOUNCE 50 // 50 ms
+unsigned long debouncePrev = 0;
+unsigned long debouncePlay = 0;
+unsigned long debounceNext = 0;
 
 // KY-040 rotary encoder
 #define KY040_SW 5
 #define KY040_DT 6
 #define KY040_CLK 47
 
-
-// Push button
-// #define buttonPin 13
-// int buttonState = 0;
-// int lastButtonState = 0;
-
 // Display object declaration
 #define OLED_RESET -1 // No reset pin
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-// Writes and centers text on OLED
+/* Writes and centers text on OLED
+Inparameters: text (string)
+Returns: None */
 void writeText(String text) {
   int16_t x1, y1;
   uint16_t w, h;
@@ -53,6 +62,23 @@ void writeText(String text) {
   display.display(); // pushes to screen
 }
 
+/* Checks if button is pressed and wasn't pressed previous loop
+Inparameters: buttonPin (int)
+Returns: buttonPressed (bool) */
+bool isButtonPressed(int buttonPin, int &lastState, unsigned long &lastDebounce) {
+  bool buttonPressed = false;
+  int buttonState = digitalRead(buttonPin);
+
+  unsigned long timeSincePress = millis() - lastDebounce;
+  if (buttonState == HIGH && lastState == LOW && timeSincePress > BUTTON_DEBOUNCE) {
+    buttonPressed = true;
+    lastDebounce = millis();
+  }
+
+  lastState = buttonState;
+  return buttonPressed;
+}
+
 
 void setup() {
   Serial.begin(115200); // initialize Serial Monitor
@@ -61,6 +87,11 @@ void setup() {
   Keyboard.begin();
   Consumer.begin();
   USB.begin();
+
+  // Buttons
+  pinMode(PREV_TRACK, INPUT_PULLDOWN);
+  pinMode(PLAY_PAUSE, INPUT_PULLDOWN);
+  pinMode(NEXT_TRACK, INPUT_PULLDOWN);
   
   Wire.begin(I2C_SDA, I2C_SCL);
   delay(1000);
@@ -84,9 +115,20 @@ void setup() {
 }
 
 void loop() {
-  // Skips to next song every 5 seconds
-  Consumer.press(CONSUMER_CONTROL_SCAN_NEXT);
-  delay(5);
-  Consumer.release();
-  delay(5000);
+  // Media buttons
+  // Previous Track
+  if (isButtonPressed(PREV_TRACK, lastPrevState, debouncePrev)) {
+    Consumer.press(CONSUMER_CONTROL_SCAN_PREVIOUS);
+    Consumer.release();
+  }
+  // Play/Pause
+  if (isButtonPressed(PLAY_PAUSE, lastPlayState, debouncePlay)) {
+    Consumer.press(CONSUMER_CONTROL_PLAY_PAUSE);
+    Consumer.release();
+  }
+  // Next Track
+  if (isButtonPressed(NEXT_TRACK, lastNextState, debounceNext)) {
+    Consumer.press(CONSUMER_CONTROL_SCAN_NEXT);
+    Consumer.release();
+  }
 }

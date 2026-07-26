@@ -43,6 +43,7 @@ int lastMuteOutState = 0;
 int lastMuteInState = 0;
 int lastSideUpState = 0;
 int lastSideDownState = 0;
+int lastSWState = 0;
 
 // Button debouncing
 #define BUTTON_DEBOUNCE 50 // 50 ms
@@ -53,11 +54,15 @@ unsigned long debounceMuteOut = 0;
 unsigned long debounceMuteIn = 0;
 unsigned long debounceSideUp = 0;
 unsigned long debounceSideDown = 0;
+unsigned long debounceSW = 0;
 
 // KY-040 rotary encoder
 #define KY040_SW 5
 #define KY040_DT 6
 #define KY040_CLK 47
+int clkState;
+int lastClkState;
+String kyMode = "brightness";
 
 // Display object declaration
 #define OLED_RESET -1 // No reset pin
@@ -97,6 +102,30 @@ bool isButtonPressed(int buttonPin, int &lastState, unsigned long &lastDebounce)
   return buttonPressed;
 }
 
+/* Checks if rotary encoder is turned and in which direction
+Inparameters: lastClkState (int)
+Returns: rotationDir (string)*/
+String checkKyTurn(int &lastClkState) {
+  String rotationDir;
+  int clockState = digitalRead(KY040_CLK);
+
+  if (clockState != lastClkState) {
+    int DT = digitalRead(KY040_DT);
+    if (DT != clockState) {
+      rotationDir = "clockwise";
+    }
+    else {
+      rotationDir = "counterClockwise";
+    }
+  }
+  else {
+    rotationDir = "still";
+  }
+  
+  lastClkState = clockState;
+  return rotationDir;
+}
+
 
 void setup() {
   Serial.begin(115200); // initialize Serial Monitor
@@ -114,6 +143,9 @@ void setup() {
   pinMode(MUTE_IN, INPUT_PULLDOWN);
   pinMode(SIDE_UP, INPUT_PULLDOWN);
   pinMode(SIDE_DOWN, INPUT_PULLDOWN);
+  pinMode(KY040_SW, INPUT);
+
+  lastClkState = digitalRead(KY040_CLK);
   
   Wire.begin(I2C_SDA, I2C_SCL);
   delay(1000);
@@ -183,6 +215,16 @@ void loop() {
   // Side Down
   if (isButtonPressed(SIDE_DOWN, lastSideDownState, debounceSideDown)) {
     Consumer.press(CONSUMER_CONTROL_BRIGHTNESS_INCREMENT);
+    Consumer.release();
+  }
+
+  // KY-040
+  if (checkKyTurn(lastClkState) == "clockwise") {
+    Consumer.press(CONSUMER_CONTROL_BRIGHTNESS_INCREMENT);
+    Consumer.release();
+  }
+  if (checkKyTurn(lastClkState) == "counterClockwise") {
+    Consumer.press(CONSUMER_CONTROL_BRIGHTNESS_DECREMENT);
     Consumer.release();
   }
 }

@@ -57,12 +57,13 @@ unsigned long debounceSideDown = 0;
 unsigned long debounceSW = 0;
 
 // KY-040 rotary encoder
-#define KY040_SW 5
-#define KY040_DT 6
-#define KY040_CLK 47
+#define KY040_SW 4
+#define KY040_DT 5
+#define KY040_CLK 6
 int clkState;
 int lastClkState;
 String kyMode = "brightness";
+String KyDirection = "still";
 
 // Display object declaration
 #define OLED_RESET -1 // No reset pin
@@ -139,11 +140,16 @@ void setup() {
   pinMode(PREV_TRACK, INPUT_PULLDOWN);
   pinMode(PLAY_PAUSE, INPUT_PULLDOWN);
   pinMode(NEXT_TRACK, INPUT_PULLDOWN);
+
   pinMode(MUTE_OUT, INPUT_PULLDOWN);
   pinMode(MUTE_IN, INPUT_PULLDOWN);
+
   pinMode(SIDE_UP, INPUT_PULLDOWN);
   pinMode(SIDE_DOWN, INPUT_PULLDOWN);
-  pinMode(KY040_SW, INPUT);
+
+  pinMode(KY040_SW, INPUT_PULLUP);
+  pinMode(KY040_CLK, INPUT);
+  pinMode(KY040_DT, INPUT);
 
   lastClkState = digitalRead(KY040_CLK);
   
@@ -219,12 +225,37 @@ void loop() {
   }
 
   // KY-040
-  if (checkKyTurn(lastClkState) == "clockwise") {
-    Consumer.press(CONSUMER_CONTROL_BRIGHTNESS_INCREMENT);
-    Consumer.release();
+  if (isButtonPressed(KY040_SW, lastSWState, debounceSW)) {
+    if (kyMode == "brightness") {
+      kyMode = "altTab";
+    }
+    else {
+      kyMode = "brightness";
+    }
   }
-  if (checkKyTurn(lastClkState) == "counterClockwise") {
-    Consumer.press(CONSUMER_CONTROL_BRIGHTNESS_DECREMENT);
-    Consumer.release();
+  
+  KyDirection = checkKyTurn(lastClkState);
+  if (KyDirection == "clockwise") {
+    if (kyMode == "brightness") {
+      Consumer.press(CONSUMER_CONTROL_BRIGHTNESS_INCREMENT);
+      Consumer.release();
+    }
+    else if (kyMode == "altTab") {
+      Keyboard.press(KEY_LEFT_ALT);
+      Keyboard.press(KEY_TAB);
+      Keyboard.releaseAll();
+    }
+  }
+  if (KyDirection == "counterClockwise") {
+    if (kyMode == "brightness") {
+      Consumer.press(CONSUMER_CONTROL_BRIGHTNESS_DECREMENT);
+      Consumer.release();
+    }
+    else if (kyMode == "altTab") {
+      Keyboard.press(KEY_LEFT_ALT);
+      Keyboard.press(KEY_LEFT_SHIFT);
+      Keyboard.press(KEY_TAB);
+      Keyboard.releaseAll();
+    }
   }
 }
